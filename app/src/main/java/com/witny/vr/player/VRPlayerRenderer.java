@@ -21,6 +21,9 @@ import org.rajawali3d.primitives.Plane;
 import org.rajawali3d.scene.Scene;
 import org.rajawali3d.util.RajLog;
 
+import java.io.BufferedInputStream;
+import java.io.InputStream;
+
 import javax.microedition.khronos.egl.EGLConfig;
 
 /**
@@ -43,6 +46,7 @@ public class VRPlayerRenderer extends VRRenderer {
 
   @Override
   public void onNewFrame(HeadTransform headTransform) {
+    // Log.d(TAG, "onNewFrame");
   }
 
 //  @Override
@@ -77,8 +81,11 @@ public class VRPlayerRenderer extends VRRenderer {
     // plane.setTransparent(true);
 
     // Create a texture and material
+    Log.d(TAG, "Adding texture");
     Texture texture = new Texture("goku");
-    Bitmap bitmap = BitmapFactory.decodeResource(mContext.getResources(), R.raw.goku);
+    // Bitmap bitmap = BitmapFactory.decodeResource(mContext.getResources(), R.raw.background);
+    InputStream is = mContext.getResources().openRawResource(R.raw.background);
+    Bitmap bitmap = BitmapFactory.decodeStream(new BufferedInputStream(is));
     texture.setBitmap(bitmap);
     Material material = new Material(true);
     try {
