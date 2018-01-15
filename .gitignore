@@ -53,3 +53,22 @@ google-services.json
 freeline.py
 freeline/
 freeline_project_description.json
+
+# Ignore Gradle GUI config
+gradle-app.setting
+
+# Avoid ignoring Gradle wrapper jar file (.jar files are usually ignored)
+!gradle-wrapper.jar
+
+# Cache of project
+.gradletasknamecache
+
+# Android Studio Navigation editor temp files
+.navigation/
+
+/local.properties
+
+*.iml
+.idea/
+/.idea/workspace.xml
+/.idea/libraries
