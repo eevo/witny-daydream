@@ -18,6 +18,7 @@ import org.rajawali3d.materials.textures.ATexture;
 import org.rajawali3d.materials.textures.Texture;
 import org.rajawali3d.materials.textures.TextureManager;
 import org.rajawali3d.primitives.Plane;
+import org.rajawali3d.primitives.Sphere;
 import org.rajawali3d.scene.Scene;
 import org.rajawali3d.util.RajLog;
 
@@ -32,7 +33,7 @@ public class VRPlayerRenderer extends VRRenderer {
   private static final String TAG = "VRPlayerRenderer";
   private Camera camera;
   private Scene scene;
-  private Plane plane;
+  private Sphere sphere;
 
   public VRPlayerRenderer(Context context) {
     super(context);
@@ -66,19 +67,19 @@ public class VRPlayerRenderer extends VRRenderer {
     Log.v(TAG, "initScene()");
 
     // Set up the image plane
-    plane = new Plane();
-    plane.setPosition(0, 0, -2);
-    plane.enableLookAt();
-    plane.setLookAt(0, 0, 0);
-    plane.setDoubleSided(true);
-    plane.setBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
-    plane.setBlendingEnabled(true);
-    plane.setVisible(true);
+    sphere = new Sphere(10,50,50) ;
+    sphere.setPosition(0, 0, -2);
+    sphere.enableLookAt();
+    sphere.setLookAt(0, 0, 0);
+    sphere.setDoubleSided(true);
+    sphere.setBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
+    sphere.setBlendingEnabled(true);
+    sphere.setVisible(true);
     // plane.setTransparent(true);
 
     // Create a texture and material
-    Texture texture = new Texture("goku");
-    Bitmap bitmap = BitmapFactory.decodeResource(mContext.getResources(), R.raw.goku);
+    Texture texture = new Texture("background");
+    Bitmap bitmap = BitmapFactory.decodeResource(mContext.getResources(), R.raw.background);
     texture.setBitmap(bitmap);
     Material material = new Material(true);
     try {
@@ -91,11 +92,11 @@ public class VRPlayerRenderer extends VRRenderer {
     material.setColor(1);
     material.enableLighting(false);
 
-    plane.setMaterial(material);
+    sphere.setMaterial(material);
 
     scene = getCurrentScene();
     camera = getCurrentCamera();
-    scene.addChild(plane);
+    scene.addChild(sphere);
   }
 
   /**
