@@ -3,6 +3,7 @@ package com.witny.vr.player;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.media.MediaPlayer;
 import android.opengl.GLES20;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -22,6 +23,14 @@ import org.rajawali3d.primitives.Sphere;
 import org.rajawali3d.scene.Scene;
 import org.rajawali3d.util.RajLog;
 
+import java.io.BufferedInputStream;
+import java.io.InputStream;
+import android.media.AudioTrack;
+import android.media.AudioManager;
+import android.media.AudioAttributes;
+import android.media.AudioFormat;
+import java.io.IOException;
+
 import javax.microedition.khronos.egl.EGLConfig;
 
 /**
@@ -34,7 +43,10 @@ public class VRPlayerRenderer extends VRRenderer {
   private Camera camera;
   private Scene scene;
   private Sphere sphere;
-
+  public AudioTrack at;
+  public int minBufferSize;
+  byte[] music = null;
+  InputStream laser;
 
   public VRPlayerRenderer(Context context) {
     super(context);
@@ -45,7 +57,18 @@ public class VRPlayerRenderer extends VRRenderer {
 
   @Override
   public void onNewFrame(HeadTransform headTransform) {
+    int i;
+    try{
+          if((i = laser.read(music)) != -1) {
+            at.write(music, 0, i);
+        }
+
+    } catch (IOException e) {
+      Log.e("Exception", "Exception  for Sound", e);
+    }
+
   }
+
 
 //  @Override
 //  public void onDrawEye(Eye eye) {
@@ -67,20 +90,34 @@ public class VRPlayerRenderer extends VRRenderer {
   public void initScene() {
     Log.v(TAG, "initScene()");
 
+    minBufferSize = AudioTrack.getMinBufferSize(48000, AudioFormat.CHANNEL_CONFIGURATION_STEREO, AudioFormat.ENCODING_PCM_16BIT);
+    music = new byte[512];
+    laser = mContext.getResources().openRawResource(R.raw.laserspeed);
+    at = new AudioTrack(AudioManager.STREAM_MUSIC, 48000,
+            AudioFormat.CHANNEL_CONFIGURATION_STEREO, AudioFormat.ENCODING_PCM_16BIT,
+            minBufferSize, AudioTrack.MODE_STREAM);
+    at.play();
+    //at.stop();
+    //at.release();
+
     // Set up the image sphere
-    sphere = new Sphere(10,50,50);
+    sphere = new Sphere(10, 50, 50);
     sphere.setPosition(0, 0, -2);
     sphere.enableLookAt();
     sphere.setLookAt(0, 0, 0);
-    sphere.setDoubleSided(true);
+    // sphere.setDoubleSided(true);
     sphere.setBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
     sphere.setBlendingEnabled(true);
     sphere.setVisible(true);
+    sphere.setScale(-1, 1, 1);
     // plane.setTransparent(true);
 
     // Create a texture and material
-    Texture texture = new Texture("background");
-    Bitmap bitmap = BitmapFactory.decodeResource(mContext.getResources(), R.raw.background);
+    Texture texture = new Texture("goku");
+
+    // Bitmap bitmap = BitmapFactory.decodeResource(mContext.getResources(), R.raw.goku);
+    InputStream is = mContext.getResources().openRawResource(R.raw.background);
+    Bitmap bitmap = BitmapFactory.decodeStream(new BufferedInputStream(is));
     texture.setBitmap(bitmap);
     Material material = new Material(true);
     try {
@@ -98,6 +135,8 @@ public class VRPlayerRenderer extends VRRenderer {
     scene = getCurrentScene();
     camera = getCurrentCamera();
     scene.addChild(sphere);
+    Log.e("Sphere is rendered", "rendered");
+
   }
 
   /**

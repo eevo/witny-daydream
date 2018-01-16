@@ -14,11 +14,11 @@ import org.rajawali3d.math.Quaternion;
 import org.rajawali3d.math.vector.Vector3;
 import org.rajawali3d.renderer.Renderer;
 
+
 import javax.microedition.khronos.egl.EGLConfig;
 
 public abstract class VRRenderer extends Renderer implements GvrView.StereoRenderer {
     private static final float MAX_LOOKAT_ANGLE = 10;
-
     protected Matrix4 mCurrentEyeMatrix;
     protected Matrix4 mHeadViewMatrix;
     protected Quaternion mCurrentEyeOrientation;
@@ -73,6 +73,8 @@ public abstract class VRRenderer extends Renderer implements GvrView.StereoRende
     @Override
     public void onSurfaceChanged(int width, int height) {
         super.onRenderSurfaceSizeChanged(null, width, height);
+        // Preload an unspatialized sound to be played on a successful trigger on the cube.
+
     }
 
     @Override

@@ -17,6 +17,9 @@
 package com.witny.vr.player;
 
 import android.content.Context;
+import android.media.AudioFormat;
+import android.media.AudioManager;
+import android.media.AudioTrack;
 import android.opengl.GLES20;
 import android.opengl.Matrix;
 import android.os.Bundle;
@@ -26,7 +29,12 @@ import com.google.vr.sdk.base.AndroidCompat;
 import com.google.vr.sdk.base.GvrActivity;
 import com.google.vr.sdk.base.GvrView;
 
+
+
 import org.rajawali3d.primitives.Plane;
+
+import java.io.InputStream;
+import java.io.IOException;
 
 public class VRActivity extends GvrActivity {
 
@@ -42,6 +50,7 @@ public class VRActivity extends GvrActivity {
       renderer = new VRPlayerRenderer(getApplicationContext());
     initializeGvrView();
     vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+
   }
 
   public void initializeGvrView() {
