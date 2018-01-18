@@ -16,7 +16,6 @@ import org.rajawali3d.renderer.Renderer;
 
 
 import javax.microedition.khronos.egl.EGLConfig;
-
 public abstract class VRRenderer extends Renderer implements GvrView.StereoRenderer {
     private static final float MAX_LOOKAT_ANGLE = 10;
     protected Matrix4 mCurrentEyeMatrix;
