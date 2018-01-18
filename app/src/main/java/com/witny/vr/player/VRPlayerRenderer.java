@@ -2,35 +2,27 @@ package com.witny.vr.player;
 
 import android.annotation.TargetApi;
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.media.MediaPlayer;
 import android.opengl.GLES20;
 import android.os.Build;
 import android.util.Log;
 import android.view.MotionEvent;
 
-import com.google.vr.sdk.base.Eye;
 import com.google.vr.sdk.base.HeadTransform;
 import com.google.vr.sdk.base.Viewport;
 
-import org.rajawali3d.Object3D;
 import org.rajawali3d.cameras.Camera;
 import org.rajawali3d.materials.Material;
 import org.rajawali3d.materials.textures.ATexture;
 import org.rajawali3d.materials.textures.Texture;
-import org.rajawali3d.materials.textures.TextureManager;
-import org.rajawali3d.primitives.Plane;
 import org.rajawali3d.primitives.Sphere;
 import org.rajawali3d.scene.Scene;
 import org.rajawali3d.util.RajLog;
 import org.rajawali3d.materials.textures.StreamingTexture;
 
-import java.io.BufferedInputStream;
 import java.io.InputStream;
 import android.media.AudioTrack;
 import android.media.AudioManager;
-import android.media.AudioAttributes;
 import android.media.AudioFormat;
 import java.io.IOException;
 
@@ -62,27 +54,30 @@ public class VRPlayerRenderer extends VRRenderer {
     // Allow Rajawali debug logs
     RajLog.setDebugEnabled(true);
   }
-  private void startAudio() {
-    Log.v(TAG, "startAudio()");
-    minBufferSize = AudioTrack.getMinBufferSize(48000, AudioFormat.CHANNEL_CONFIGURATION_STEREO, AudioFormat.ENCODING_PCM_16BIT);
-    music = new byte[5000];
-    at = new AudioTrack(AudioManager.STREAM_MUSIC, 48000,
-            AudioFormat.CHANNEL_CONFIGURATION_STEREO, AudioFormat.ENCODING_PCM_16BIT,
-            minBufferSize, AudioTrack.MODE_STREAM);
-    yell = mContext.getResources().openRawResource(R.raw.yelling);
+  private void startAudio(){
+
     // perform any needed setup
     // audioThread is a member variable (you can declare it as 'private Thread audioThread;' )
     audioThread = new Thread() {
       // Thread has a function called 'run' that we want to override
+      @TargetApi(Build.VERSION_CODES.LOLLIPOP)
       @Override
       public void run() {
+        Log.v(TAG, "startAudio()");
+        minBufferSize = AudioTrack.getMinBufferSize(48000, AudioFormat.CHANNEL_CONFIGURATION_STEREO, AudioFormat.ENCODING_PCM_16BIT);
+        music = new byte[5000];
+        at = new AudioTrack(AudioManager.STREAM_MUSIC, 48000,
+                AudioFormat.CHANNEL_CONFIGURATION_STEREO, AudioFormat.ENCODING_PCM_16BIT,
+                minBufferSize, AudioTrack.MODE_STREAM);
+        yell = mContext.getResources().openRawResource(R.raw.yelling);
         Log.v(TAG, "startAudio()Inside Run");
         at.play();
         // play the audio track and loop indefinitely, repeatedly writing to AudioTrack
         int i;
         int x = 0;
+        double scale;
         try{
-          while(x == 0) {
+          while(x == 0){
             i = yell.read(music);
             if (i != -1){
               if (i == music.length){
@@ -91,20 +86,18 @@ public class VRPlayerRenderer extends VRRenderer {
                 head.getForwardVector(fwd, 0);
                 angle = Math.atan2(fwd[0], fwd[2]);
                 angle = Math.toDegrees(angle);
-                double scale;
                 double diff = angle-angleOfSound;
                 for(k = 0; k <music.length; k+=2){
                   float f = convertBytesToFloat(music[k], music[k+1]);
                   if(angle == angleOfSound){
-                    f = 1;
+                    f = 1.0f;
                   }
                   if(diff == 180){
-                    f = 0;
+                    f = 0.0f;
                   }
                   if(diff > 0 && diff < 180){
-                    scale = diff / 180;
+                    scale = diff/180;
                     f = f * (float)scale;
-
                   }
                   byte[] B = convertFloatToBytes(f);
                   music[0] = B[1];
@@ -112,7 +105,7 @@ public class VRPlayerRenderer extends VRRenderer {
                 }
                 at.write(music, 0, i);
               }
-            } else {
+            }else{
               yell.reset();
               yell.skip(44);
             }
@@ -170,6 +163,8 @@ public class VRPlayerRenderer extends VRRenderer {
    */
   @Override
   public void initScene() {
+    //float[] s = new float[3];
+   head = new HeadTransform();
     startAudio();
     // Set up the image sphere
     sphere = new Sphere(10, 50, 50);
@@ -205,17 +200,11 @@ public class VRPlayerRenderer extends VRRenderer {
 
     getCurrentScene().addChild(sphere);
 
-    //getCurrentCamera().setPosition(Vector3.ZERO);
 
     getCurrentCamera().setFieldOfView(75);
 
     mMediaPlayer.start();
 
-    // Bitmap bitmap = BitmapFactory.decodeResource(mContext.getResources(), R.raw.goku)
-
-    // create texture from media player video
-    // set material with video texture
-    //Material material = new Material();
     material.setColorInfluence(0f);
     try {
       material.addTexture(videoTexture);
