@@ -30,6 +30,8 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.RandomAccess;
 
@@ -52,6 +54,7 @@ public class VRPlayerRenderer extends VRRenderer implements OnFPSUpdateListener 
   int sampleRate;
   AudioTrack audioTrack;
   byte[] audioBuffer;
+  float[] audioFloatBuffer;
   InputStream audioStream;
   private volatile boolean audioExit = false;
 
@@ -78,7 +81,7 @@ public class VRPlayerRenderer extends VRRenderer implements OnFPSUpdateListener 
 
   @Override
   public void onFPSUpdate(double fps) {
-    // Log.d(TAG, "FPS is: " + fps);
+    Log.d(TAG, "FPS is: " + fps);
   }
 
   public void stop() {
@@ -174,8 +177,44 @@ public class VRPlayerRenderer extends VRRenderer implements OnFPSUpdateListener 
     Log.d(TAG, "Buffer size is: " + bufferSize);
   }
 
+  // convert two bytes to a float (for 16-bit PCM playback)
+  private float convertBytesToFloat(byte b1, byte b2) {
+    short s = (short)(((b1 & 0xFF)<<8) | (b2 & 0xFF));
+    return (float)s;
+  }
+
+  // convert a float to two bytes (for 16-bit PCM playback)
+  private byte[] convertFloatToBytes(float f) {
+    short s = (short)f;
+    byte[] b = new byte[2];
+    b[0] = (byte)(s >> 8);
+    b[1] = (byte)s;
+    return b;
+  }
+
+  private void scaleSamples(float scale) {
+    for (int i = 0; i < audioBuffer.length; i+=2) {
+      float sample = convertBytesToFloat(audioBuffer[i+1], audioBuffer[i]);
+      sample *= scale;
+      byte[] b = convertFloatToBytes(sample);
+      audioBuffer[i] = b[1];
+      audioBuffer[i+1] = b[0];
+//      short s = (short)(((audioBuffer[i*2+1] & 0xFF)<<8) | (audioBuffer[i*2] & 0xFF));
+//      s = (short)((float)s * 0.5f);
+//      audioBuffer[i*2+1] = (byte)(s >> 8);
+//      audioBuffer[i*2] = (byte)s;
+//
+////      short b1 = (short)audioBuffer[i*2];
+////      short b2 = (short)audioBuffer[i*2+1];
+////      short sample = (short)(b1 << 8 | b2);
+//      // Log.d(TAG, "sample: " + bb.getShort(0));
+//      // audioFloatBuffer[i] = (float)s / 32767.0f;
+    }
+  }
+
   private void startAudio() {
     audioBuffer = new byte[1024];
+    audioFloatBuffer = new float[audioBuffer.length/2];
     audioStream = mContext.getResources().openRawResource(R.raw.yelling);
     try {
       audioStream.skip(44L);
@@ -193,7 +232,9 @@ public class VRPlayerRenderer extends VRRenderer implements OnFPSUpdateListener 
           try {
             if ((i = audioStream.read(audioBuffer)) != -1) {
               if (i == audioBuffer.length) {
+                scaleSamples(0.7f);
                 audioTrack.write(audioBuffer, 0, i);
+                // audioTrack.write(audioBuffer, 0, i);
               }
             } else {
               audioStream.reset();
