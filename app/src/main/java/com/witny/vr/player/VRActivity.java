@@ -79,13 +79,13 @@ public class VRActivity extends GvrActivity {
   @Override
   public void onPause() {
     super.onPause();
+    renderer.stop();
   }
 
   @Override
   public void onResume() {
     super.onResume();
     renderer.play();
-
   }
   @Override
   public void onDestroy() {

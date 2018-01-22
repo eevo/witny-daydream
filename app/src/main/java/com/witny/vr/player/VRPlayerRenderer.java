@@ -45,10 +45,10 @@ public class VRPlayerRenderer extends VRRenderer {
   public AudioTrack at;
   public int minBufferSize;
   byte[] music = null;
-  InputStream yell;
+  InputStream nookAudio;
   public double angle;
   private MediaPlayer mMediaPlayer;
-  public StreamingTexture videoTexture;
+  public CustomStreamingTexture videoTexture;
   public double angleOfSound;
   private Thread audioThread;
   public  HeadTransform head;
@@ -62,6 +62,7 @@ public class VRPlayerRenderer extends VRRenderer {
     RajLog.setDebugEnabled(true);
   }
   private void startAudio(){
+    head = new HeadTransform();
     // perform any needed setup
     // audioThread is a member varåiable (you can declare it as 'private Thread audioThread;' )
     audioThread = new Thread() {
@@ -75,7 +76,7 @@ public class VRPlayerRenderer extends VRRenderer {
         at = new AudioTrack(AudioManager.STREAM_MUSIC, 48000,
                 AudioFormat.CHANNEL_CONFIGURATION_STEREO, AudioFormat.ENCODING_PCM_16BIT,
                 minBufferSize, AudioTrack.MODE_STREAM);
-        yell = mContext.getResources().openRawResource(R.raw.yelling);
+        nookAudio = mContext.getResources().openRawResource(R.raw.nook);
         Log.v(TAG, "startAudio()Inside Run");
         at.play();
         // play the audio track and loop indefinitely, repeatedly writing to AudioTrack
@@ -83,7 +84,7 @@ public class VRPlayerRenderer extends VRRenderer {
         int x = 0;
         try{
           while(x == 0 && isPlaying == true){
-            i = yell.read(music);
+            i = nookAudio.read(music);
             if (i != -1){
               if (i == music.length){
                 angleOfSound = Math.toRadians(90);
@@ -105,21 +106,6 @@ public class VRPlayerRenderer extends VRRenderer {
                     if(sampleNumber == 0) {
                         g = f * scale[1];
                     }
-//                  if(angle == angleOfSound){
-//                    g = 1.0f;
-//                  }
-//                  if(diff == 180){
-//                    g = 0.0f;
-//                  }
-//                  if(diff > 0 && diff < 360){
-//                    scale = diff/180;
-//                    g = f * (float)scale;
-//                  }
-//                  if(diff > 180 && diff < 360){
-//                        scale = (360-diff)/180;
-//                        g = f * (float)scale;
-//                  }
-
                   byte[] B = convertFloatToBytes(g);
                     music[k] = B[1];
                     music[k+1] = B[0];
@@ -127,8 +113,8 @@ public class VRPlayerRenderer extends VRRenderer {
                 at.write(music, 0, i);
               }
             }else{
-              yell.reset();
-              yell.skip(44);
+              nookAudio.reset();
+              nookAudio.skip(44);
             }
           }
         }catch (IOException e){
@@ -193,11 +179,18 @@ isPlaying = false;
   }
   public void play(){
     isPlaying = true;
-      startAudio();
+    startAudio();
     }
 
   @Override
   public void onDrawEye(Eye eye) {
+    if(eye.getType() == Eye.Type.LEFT){
+      videoTexture.setOffset(0f, 0f);
+    }
+    else {
+      videoTexture.setOffset(0f, 0.5f);
+    }
+    super.onDrawEye(eye);
   }
     private Material createMaterial() {
         VertexShader vertexShader = new VertexShader();
@@ -232,50 +225,30 @@ isPlaying = false;
    */
   @Override
   public void initScene() {
-   head = new HeadTransform();
-    // Set up the image sphere
-    sphere = new Sphere(10, 50, 50);
-    sphere.setPosition(0, 0, -2);
-    sphere.enableLookAt();
-    sphere.setLookAt(0, 0, 0);
-    // sphere.setDoubleSided(true);
-     sphere.setBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
-    sphere.setBlendingEnabled(true);
-    sphere.setVisible(true);
-    sphere.setScale(-1, 1, 1);
-
-    Texture texture = new Texture("video");
     mMediaPlayer = MediaPlayer.create(getContext(),
-            R.raw.video);
+            R.raw.doors);
     mMediaPlayer.setLooping(true);
     mMediaPlayer.setVolume(0,0);
 
-    videoTexture = new StreamingTexture("video", mMediaPlayer);
-    Material material = new Material();
-    material.setColorInfluence(0);
+    videoTexture = new CustomStreamingTexture("doors", mMediaPlayer);
+    videoTexture.enableScaling(true);
+    videoTexture.enableOffset(true);
+    videoTexture.setScale(1f,0.5f);
+    Material material = createMaterial();
     try {
       material.addTexture(videoTexture);
     } catch (ATexture.TextureException e) {
       e.printStackTrace();
     }
 
-    Sphere sphere = new Sphere(50, 64, 32);
+    sphere = new Sphere(50, 64, 32);
     sphere.setScale(-1,1,1);
-    sphere.setMaterial(material);
 
     //getCurrentScene().addChild(sphere);
 
     getCurrentCamera().setFieldOfView(75);
     getCurrentCamera().setPosition(Vector3.ZERO);
       mMediaPlayer.start();
-
-    material.setColorInfluence(0f);
-    try {
-      material.addTexture(videoTexture);
-    } catch (ATexture.TextureException e){
-      throw new RuntimeException(e);
-    }
-    sphere.setMaterial(material);
 
     // add sphere to scene
    // getCurrentScene().addChild(sphere);
