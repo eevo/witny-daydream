@@ -52,18 +52,24 @@ public abstract class VRRenderer extends Renderer implements GvrView.StereoRende
 
     @Override
     public void onDrawEye(Eye eye) {
-        getCurrentCamera().updatePerspective(
-                eye.getFov().getLeft(),
-                eye.getFov().getRight(),
-                eye.getFov().getBottom(),
-                eye.getFov().getTop());
-        mCurrentEyeMatrix.setAll(eye.getEyeView());
-        mCurrentEyeOrientation.fromMatrix(mCurrentEyeMatrix);
-        getCurrentCamera().setOrientation(mCurrentEyeOrientation);
-        getCurrentCamera().setPosition(mCameraPosition);
-        getCurrentCamera().getPosition().add(mCurrentEyeMatrix.getTranslation().inverse());
-        super.onRenderFrame(null);
-    }
+            getCurrentCamera().updatePerspective(
+                    eye.getFov().getLeft(),
+                    eye.getFov().getRight(),
+                    eye.getFov().getBottom(),
+                    eye.getFov().getTop());
+            float[] eyeview = eye.getEyeView();
+            float[] newEyeview = new float[]{
+                    eyeview[ 0],  eyeview[ 4],  eyeview[ 8],  eyeview[12],
+                    eyeview[ 1],  eyeview[ 5],  eyeview[ 9],  eyeview[13],
+                    eyeview[ 2],  eyeview[ 6],  eyeview[10],  eyeview[14],
+                    eyeview[ 3],  eyeview[ 7],  eyeview[11],  eyeview[15] };
+            mCurrentEyeMatrix.setAll(newEyeview); // eye.getEyeView());
+            mCurrentEyeOrientation.fromMatrix(mCurrentEyeMatrix);
+            getCurrentCamera().setOrientation(mCurrentEyeOrientation);
+            getCurrentCamera().setPosition(mCameraPosition);
+            getCurrentCamera().getPosition().add(mCurrentEyeMatrix.getTranslation().inverse());
+            super.onRenderFrame(null);
+        }
 
     @Override
     public void onFinishFrame(Viewport viewport) {

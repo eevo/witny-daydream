@@ -84,6 +84,14 @@ public class VRActivity extends GvrActivity {
   @Override
   public void onResume() {
     super.onResume();
+    renderer.play();
+
+  }
+  @Override
+  public void onDestroy() {
+    super.onDestroy();
+    renderer.stop();
+
   }
 
   /**
