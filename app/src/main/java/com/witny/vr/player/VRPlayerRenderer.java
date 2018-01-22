@@ -22,6 +22,7 @@ import org.rajawali3d.materials.textures.ATexture;
 import org.rajawali3d.materials.textures.Texture;
 import org.rajawali3d.materials.textures.TextureManager;
 import org.rajawali3d.primitives.Plane;
+import org.rajawali3d.primitives.Sphere;
 import org.rajawali3d.scene.Scene;
 import org.rajawali3d.util.OnFPSUpdateListener;
 import org.rajawali3d.util.RajLog;
@@ -108,15 +109,23 @@ public class VRPlayerRenderer extends VRRenderer implements OnFPSUpdateListener 
   public void initScene() {
     Log.v(TAG, "initScene()");
 
+    Sphere sphere = new Sphere(50, 32, 32);
+    sphere.setPosition(0, 0, 0);
+    sphere.setBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
+    sphere.setBlendingEnabled(true);
+    sphere.setVisible(true);
+    sphere.setScaleX(-1);
+    sphere.disableLookAt();
+
     // Set up the image plane
-    plane = new Plane();
-    plane.setPosition(0, 0, -2);
-    plane.enableLookAt();
-    plane.setLookAt(0, 0, 0);
-    plane.setDoubleSided(true);
-    plane.setBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
-    plane.setBlendingEnabled(true);
-    plane.setVisible(true);
+//    plane = new Plane();
+//    plane.setPosition(0, 0, -2);
+//    plane.enableLookAt();
+//    plane.setLookAt(0, 0, 0);
+//    plane.setDoubleSided(true);
+//    plane.setBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
+//    plane.setBlendingEnabled(true);
+//    plane.setVisible(true);
     // plane.setTransparent(true);
 
     // Create a texture and material
@@ -137,11 +146,11 @@ public class VRPlayerRenderer extends VRRenderer implements OnFPSUpdateListener 
     material.setColor(1);
     material.enableLighting(false);
 
-    plane.setMaterial(material);
+    sphere.setMaterial(material);
 
     scene = getCurrentScene();
     camera = getCurrentCamera();
-    scene.addChild(plane);
+    scene.addChild(sphere);
 
     // audio
     prepAudio();
