@@ -2,6 +2,8 @@ package com.witny.vr.player;
 
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.media.MediaPlayer;
 import android.opengl.GLES20;
 import android.os.Build;
@@ -12,6 +14,7 @@ import com.google.vr.sdk.base.Eye;
 import com.google.vr.sdk.base.HeadTransform;
 import com.google.vr.sdk.base.Viewport;
 
+import org.rajawali3d.Object3D;
 import org.rajawali3d.cameras.Camera;
 import org.rajawali3d.materials.Material;
 import org.rajawali3d.materials.shaders.FragmentShader;
@@ -19,6 +22,8 @@ import org.rajawali3d.materials.shaders.VertexShader;
 import org.rajawali3d.materials.textures.ATexture;
 import org.rajawali3d.materials.textures.Texture;
 import org.rajawali3d.math.vector.Vector3;
+import org.rajawali3d.primitives.Plane;
+import org.rajawali3d.primitives.ScreenQuad;
 import org.rajawali3d.primitives.Sphere;
 import org.rajawali3d.scene.Scene;
 import org.rajawali3d.util.RajLog;
@@ -54,6 +59,11 @@ public class VRPlayerRenderer extends VRRenderer {
   public  HeadTransform head;
   private static final double maxScale = 0.95;
   private volatile boolean isPlaying = false;
+  ScreenQuad reticle;
+  private Material reticleDefaultMaterial;
+  private Material reticleIsLookingAtMaterial;
+  private Plane doorFrame;
+
   public VRPlayerRenderer(Context context) {
     super(context);
 
@@ -159,6 +169,15 @@ public class VRPlayerRenderer extends VRRenderer {
     float[] fwd = new float[3];
     headTransform.getForwardVector(fwd, 0);
     head = headTransform;
+
+    if (isLookingAtObject(doorFrame)) {
+      Log.d(TAG, "Looking");
+      reticle.setMaterial(reticleIsLookingAtMaterial);
+    } else {
+      reticle.setMaterial(reticleDefaultMaterial);
+    }
+
+    super.onNewFrame(headTransform);
   }
   private float convertBytesToFloat(byte b1, byte b2) {
     short s = (short)(((b1 & 0xFF)<<8) | (b2 & 0xFF));
@@ -262,6 +281,75 @@ isPlaying = false;
     scene = getCurrentScene();
     camera = getCurrentCamera();
     scene.addChild(sphere);
+
+    createReticle(new Vector3(0,0,-0.05f), new Vector3(0.015f, 0.015f, 0.015f));
+    scene.addChild(reticle);
+
+    createDoorFrame();
+    scene.addChild(doorFrame);
+  }
+
+  private void createReticle (Vector3 position, Vector3 scale) {
+    // NOTE: don't use special characters for the "name" field--it will cause an error.
+
+    // Load the default texture
+    reticleDefaultMaterial = loadGraphic(mContext, "reticleDefault", R.raw.reticle);
+
+    // Load the "isLookingAt" texture
+    reticleIsLookingAtMaterial = loadGraphic(mContext, "reticleLookingAt", R.raw.thumbs_up);
+
+    reticle = new ScreenQuad();
+    reticle.setMaterial(reticleDefaultMaterial);
+    reticle.setPosition(position);
+    reticle.setTransparent(true);
+    reticle.setScale(scale);
+    reticle.setBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
+    reticle.setBlendingEnabled(true);
+    reticle.setVisible(true);
+
+    reticle.setName("reticle");
+  }
+
+  private void createDoorFrame() {
+    doorFrame = new Plane();
+
+    // Load the door frame texture
+    Material material = loadGraphic(mContext, "doorFrame", R.raw.door_frame);
+
+    doorFrame.setMaterial(material);
+    doorFrame.setPosition(0,0,-1);
+    doorFrame.enableLookAt();
+    doorFrame.setLookAt(0,0,0);
+    doorFrame.setTransparent(true);
+    doorFrame.setScale(0.5, 1.0f, 0.1f);
+    doorFrame.setBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
+    doorFrame.setBlendingEnabled(true);
+    doorFrame.setVisible(true);
+  }
+
+  /**
+   * Load a material.
+   * @param context
+   * @param texId
+   * @return
+   */
+  public static Material loadGraphic(Context context, String name, int texId) {
+    Log.d(TAG, "Loading graphic");
+    Texture texture = new Texture(name);
+    Bitmap bitmap = BitmapFactory.decodeResource(context.getResources(), texId);
+    texture.setBitmap(bitmap);
+    Material material = new Material(true);
+    try {
+      material.addTexture(texture);
+    } catch (ATexture.TextureException e) {
+      e.printStackTrace();
+    }
+
+    material.setColorInfluence(1);
+    material.setColor(1);
+    material.enableLighting(false);
+
+    return material;
   }
 
   /**
@@ -270,5 +358,11 @@ isPlaying = false;
   @Override
   public void onOffsetsChanged(float xOffset, float yOffset, float xOffsetStep,
                                float yOffsetStep, int xPixelOffset, int yPixelOffset) {}
+
+  public void onScreenTap() {
+    if (reticle != null) {
+      reticle.setVisible(!reticle.isVisible());
+    }
+  }
 
 }
