@@ -47,7 +47,7 @@ public abstract class VRRenderer extends Renderer implements GvrView.StereoRende
     public void onNewFrame(HeadTransform headTransform) {
         headTransform.getHeadView(mHeadView, 0);
         mHeadViewMatrix.setAll(mHeadView);
-        Log.i("VRRenderer", "onNewFrame");
+        // Log.i("VRRenderer", "onNewFrame");
     }
 
     @Override

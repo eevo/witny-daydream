@@ -138,30 +138,32 @@ public class VRPlayerRenderer extends VRRenderer {
     // we've created the thread, now we need to start it
     audioThread.start();
   }
-    public static float[] getScale(double soundAngle, double userAngle) {
-        double minScale = Math.sqrt(1.0-maxScale);
-        // are we scaling for the left ear or the right
-        // boolean isRight = (index/2 & 0x1) == 1;
-        double deltaAngle = soundAngle - userAngle;
-        float[] scale = new float[2];
 
-        // The right ear is going to be ~90 degrees clockwise from forward
-        // double rightAngle = deltaAngle + Math.PI/2;
+  public static float[] getScale(double soundAngle, double userAngle) {
+    double minScale = Math.sqrt(1.0-maxScale);
+    // are we scaling for the left ear or the right
+    // boolean isRight = (index/2 & 0x1) == 1;
+    double deltaAngle = soundAngle - userAngle;
+    float[] scale = new float[2];
 
-        // The left ear is going to be ~90 degrees counterclockwise from forward
-        double leftAngle = deltaAngle - Math.PI/2;
+    // The right ear is going to be ~90 degrees clockwise from forward
+    // double rightAngle = deltaAngle + Math.PI/2;
 
-        double lScale = Math.cos(leftAngle);
-        // get lScale in the range [0, 1]
-        lScale = (lScale + 1) * 0.5;
-        // get lScale in the range [minScale, maxScale]
-        lScale = lScale * (maxScale - minScale) + minScale;
-        // scale[0] will be the left scale, scale[1] the right
-        scale[0] = (float)lScale;
-        scale[1] = (float)Math.sqrt(1.0 - lScale*lScale);
+    // The left ear is going to be ~90 degrees counterclockwise from forward
+    double leftAngle = deltaAngle - Math.PI/2;
 
-        return scale;
-    }
+    double lScale = Math.cos(leftAngle);
+    // get lScale in the range [0, 1]
+    lScale = (lScale + 1) * 0.5;
+    // get lScale in the range [minScale, maxScale]
+    lScale = lScale * (maxScale - minScale) + minScale;
+    // scale[0] will be the left scale, scale[1] the right
+    scale[0] = (float)lScale;
+    scale[1] = (float)Math.sqrt(1.0 - lScale*lScale);
+
+    return scale;
+  }
+
   @TargetApi(Build.VERSION_CODES.LOLLIPOP)
   @Override
   public void onNewFrame(HeadTransform headTransform){
@@ -171,7 +173,6 @@ public class VRPlayerRenderer extends VRRenderer {
     head = headTransform;
 
     if (isLookingAtObject(doorFrame)) {
-      Log.d(TAG, "Looking");
       reticle.setMaterial(reticleIsLookingAtMaterial);
     } else {
       reticle.setMaterial(reticleDefaultMaterial);
@@ -185,7 +186,6 @@ public class VRPlayerRenderer extends VRRenderer {
   }
 
   // convert a float to two bytes (for 16-bit PCM playback)
-
   private byte[] convertFloatToBytes(float f){
     short s = (short)f;
     byte[] b = new byte[2];
@@ -280,9 +280,11 @@ isPlaying = false;
 
     scene = getCurrentScene();
     camera = getCurrentCamera();
+    camera.setNearPlane(0.1);
+    camera.setFarPlane(100);
     scene.addChild(sphere);
 
-    createReticle(new Vector3(0,0,-0.05f), new Vector3(0.015f, 0.015f, 0.015f));
+    createReticle(new Vector3(0,0,-0.05f), new Vector3(0.15f, 0.15f, 0.15f));
     scene.addChild(reticle);
 
     createDoorFrame();
@@ -308,6 +310,7 @@ isPlaying = false;
     reticle.setVisible(true);
 
     reticle.setName("reticle");
+    reticle.rotate(Vector3.Axis.Z, 180);
   }
 
   private void createDoorFrame() {
@@ -317,11 +320,11 @@ isPlaying = false;
     Material material = loadGraphic(mContext, "doorFrame", R.raw.door_frame);
 
     doorFrame.setMaterial(material);
-    doorFrame.setPosition(0,0,-1);
+    doorFrame.setPosition(0,0,-1.0f);
     doorFrame.enableLookAt();
     doorFrame.setLookAt(0,0,0);
     doorFrame.setTransparent(true);
-    doorFrame.setScale(0.5, 1.0f, 0.1f);
+    doorFrame.setScale(0.5f, 1.0f, 1.0f);
     doorFrame.setBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
     doorFrame.setBlendingEnabled(true);
     doorFrame.setVisible(true);
