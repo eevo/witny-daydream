@@ -7,7 +7,9 @@ import android.opengl.GLES20;
 import android.os.Build;
 import android.util.Log;
 import android.view.MotionEvent;
-
+import org.rajawali3d.Object3D;
+import org.rajawali3d.primitives.Plane;
+import org.rajawali3d.primitives.ScreenQuad;
 import com.google.vr.sdk.base.Eye;
 import com.google.vr.sdk.base.HeadTransform;
 import com.google.vr.sdk.base.Viewport;
@@ -31,6 +33,11 @@ import android.media.AudioFormat;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+
 
 /**
  * Created by jake on 1/14/18.
@@ -45,7 +52,7 @@ public class VRPlayerRenderer extends VRRenderer {
   public AudioTrack at;
   public int minBufferSize;
   byte[] music = null;
-  InputStream nookAudio;
+  InputStream scaryAudio;
   public double angle;
   private MediaPlayer mMediaPlayer;
   public CustomStreamingTexture videoTexture;
@@ -54,6 +61,10 @@ public class VRPlayerRenderer extends VRRenderer {
   public  HeadTransform head;
   private static final double maxScale = 0.95;
   private volatile boolean isPlaying = false;
+  ScreenQuad reticle;
+ private Material reticleDefaultMaterial;
+ private Material reticleIsLookingAtMaterial;
+ private Plane doorFrame;
   public VRPlayerRenderer(Context context) {
     super(context);
 
@@ -76,7 +87,7 @@ public class VRPlayerRenderer extends VRRenderer {
         at = new AudioTrack(AudioManager.STREAM_MUSIC, 48000,
                 AudioFormat.CHANNEL_CONFIGURATION_STEREO, AudioFormat.ENCODING_PCM_16BIT,
                 minBufferSize, AudioTrack.MODE_STREAM);
-        nookAudio = mContext.getResources().openRawResource(R.raw.nook);
+        scaryAudio = mContext.getResources().openRawResource(R.raw.kkdirge);
         Log.v(TAG, "startAudio()Inside Run");
         at.play();
         // play the audio track and loop indefinitely, repeatedly writing to AudioTrack
@@ -84,7 +95,7 @@ public class VRPlayerRenderer extends VRRenderer {
         int x = 0;
         try{
           while(x == 0 && isPlaying == true){
-            i = nookAudio.read(music);
+            i = scaryAudio.read(music);
             if (i != -1){
               if (i == music.length){
                 angleOfSound = Math.toRadians(90);
@@ -113,8 +124,8 @@ public class VRPlayerRenderer extends VRRenderer {
                 at.write(music, 0, i);
               }
             }else{
-              nookAudio.reset();
-              nookAudio.skip(44);
+              scaryAudio.reset();
+              scaryAudio.skip(44);
             }
           }
         }catch (IOException e){
@@ -159,6 +170,15 @@ public class VRPlayerRenderer extends VRRenderer {
     float[] fwd = new float[3];
     headTransform.getForwardVector(fwd, 0);
     head = headTransform;
+    if (isLookingAtObject(doorFrame)) {
+      Log.d(TAG, "Looking");
+      reticle.setMaterial(reticleIsLookingAtMaterial);
+      } else {
+      reticle.setMaterial(reticleDefaultMaterial);
+      }
+
+    super.onNewFrame(headTransform);
+
   }
   private float convertBytesToFloat(byte b1, byte b2) {
     short s = (short)(((b1 & 0xFF)<<8) | (b2 & 0xFF));
@@ -223,8 +243,11 @@ isPlaying = false;
    * Create all objects, materials, textures, etc. The engine is guaranteed to be set up at this
    * point, whereas it may not be ready in onCreate or elsewhere.
    */
+  @TargetApi(Build.VERSION_CODES.LOLLIPOP)
   @Override
-  public void initScene() {
+  public void initScene(){
+    int randomNum = ThreadLocalRandom.current().nextInt(0, 2 + 1);
+    Log.d("randomNumber",Integer.toString(randomNum));
     mMediaPlayer = MediaPlayer.create(getContext(),
             R.raw.doors);
     mMediaPlayer.setLooping(true);

@@ -103,5 +103,6 @@ public class VRActivity extends GvrActivity {
 
     // Always give user feedback.
     vibrator.vibrate(50);
+   // renderer.onScreenTap();
   }
 }
