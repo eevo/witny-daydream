@@ -10,7 +10,7 @@ import org.rajawali3d.materials.textures.ATexture;
 import java.util.List;
 
 /**
- * Created by eram on 1/22/18.
+ * Created by michelle on 1/22/18.
  */
 
 public class CustomFragmentShader extends ATextureFragmentShaderFragment {
