@@ -36,6 +36,7 @@ import android.media.AudioFormat;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * Created by jake on 1/14/18.
@@ -63,6 +64,16 @@ public class VRPlayerRenderer extends VRRenderer {
   private Material reticleDefaultMaterial;
   private Material reticleIsLookingAtMaterial;
   private Plane doorFrame;
+  private int randomNum;
+  private Plane doorFrame1;
+  private Plane doorFrame2;
+  private Plane doorFrame3;
+  private boolean videoChanged = false;
+  private float vOffset;
+  private float vScale;
+  private boolean notDoors = false;
+
+
 
   public VRPlayerRenderer(Context context) {
     super(context);
@@ -74,7 +85,7 @@ public class VRPlayerRenderer extends VRRenderer {
   private void startAudio(){
     head = new HeadTransform();
     // perform any needed setup
-    // audioThread is a member varåiable (you can declare it as 'private Thread audioThread;' )
+    // audioThread is a member variable (you can declare it as 'private Thread audioThread;' )
     audioThread = new Thread() {
       // Thread has a function called 'run' that we want to override
       @TargetApi(Build.VERSION_CODES.LOLLIPOP)
@@ -147,7 +158,7 @@ public class VRPlayerRenderer extends VRRenderer {
     float[] scale = new float[2];
 
     // The right ear is going to be ~90 degrees clockwise from forward
-    // double rightAngle = deltaAngle + Math.PI/2;
+//     double rightAngle = deltaAngle + Math.PI/2;
 
     // The left ear is going to be ~90 degrees counterclockwise from forward
     double leftAngle = deltaAngle - Math.PI/2;
@@ -164,6 +175,57 @@ public class VRPlayerRenderer extends VRRenderer {
     return scale;
   }
 
+  private void checkLook(){
+    Log.d("videoChange", Boolean.toString(videoChanged));
+    if (isLookingAtObject(doorFrame1) && randomNum != 0) {
+      if (videoChanged == false) {
+        notDoors = true;
+        openAndCloseDoor(1);
+      }
+    }
+    if (isLookingAtObject(doorFrame2) && randomNum != 1) {
+      if (videoChanged == false) {
+        notDoors = true;
+        openAndCloseDoor(2);
+      }
+    }
+    if (isLookingAtObject(doorFrame3) && randomNum != 2) {
+      if (videoChanged == false) {
+        notDoors = true;
+        openAndCloseDoor(3);
+      }
+    }
+    if (isLookingAtObject(doorFrame1) && randomNum == 0) {
+      reticle.setMaterial(reticleIsLookingAtMaterial);
+      if (videoChanged == false) {
+        openAndChangeVideo();
+        reticle.destroy();
+        notDoors = true;
+        videoChanged = true;
+      }
+    }
+    if (isLookingAtObject(doorFrame2) && randomNum == 1) {
+      reticle.setMaterial(reticleIsLookingAtMaterial);
+      if (videoChanged == false) {
+        notDoors = true;
+        openAndChangeVideo();
+        reticle.destroy();
+        videoChanged = true;
+      }
+    }
+    if (isLookingAtObject(doorFrame3) && randomNum == 2) {
+      reticle.setMaterial(reticleIsLookingAtMaterial);
+      if (videoChanged == false) {
+        notDoors = true;
+        openAndChangeVideo();
+        reticle.destroy();
+        videoChanged = true;
+      }
+    }
+    else {
+      reticle.setMaterial(reticleDefaultMaterial);
+    }
+  }
   @TargetApi(Build.VERSION_CODES.LOLLIPOP)
   @Override
   public void onNewFrame(HeadTransform headTransform){
@@ -171,14 +233,92 @@ public class VRPlayerRenderer extends VRRenderer {
     float[] fwd = new float[3];
     headTransform.getForwardVector(fwd, 0);
     head = headTransform;
-
-    if (isLookingAtObject(doorFrame)) {
-      reticle.setMaterial(reticleIsLookingAtMaterial);
-    } else {
-      reticle.setMaterial(reticleDefaultMaterial);
+    if(notDoors == false) {
+      checkLook();
     }
-
     super.onNewFrame(headTransform);
+  }
+  private void openAndChangeVideo() {
+    mMediaPlayer.stop();
+    mMediaPlayer.release();
+    if (randomNum == 0) {
+      mMediaPlayer = MediaPlayer.create(getContext(),
+              R.raw.door1_open);
+    }
+    if (randomNum == 1) {
+      mMediaPlayer = MediaPlayer.create(getContext(),
+              R.raw.door2_open);
+    }
+    if (randomNum == 2) {
+      mMediaPlayer = MediaPlayer.create(getContext(),
+              R.raw.door3_open);
+    }
+    videoTexture.updateMediaPlayer(mMediaPlayer);
+    mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+      public void onCompletion(MediaPlayer mp) {
+        mMediaPlayer.stop();
+        mMediaPlayer.release();
+        mMediaPlayer = MediaPlayer.create(getContext(),
+                R.raw.spaceperson);
+        videoTexture.updateMediaPlayer(mMediaPlayer);
+        notDoors = true;
+        vScale = 1.0f;
+        vOffset = 0f;
+        mMediaPlayer.start();
+      }
+    });
+    mMediaPlayer.start();
+  }
+  private void openAndCloseDoor(final int doorNum){
+    mMediaPlayer.stop();
+    mMediaPlayer.release();
+    if (doorNum == 1) {
+      mMediaPlayer = MediaPlayer.create(getContext(),
+              R.raw.door1_open);
+    }
+    if (doorNum == 2) {
+      mMediaPlayer = MediaPlayer.create(getContext(),
+              R.raw.door2_open);
+    }
+    if (doorNum == 3) {
+      mMediaPlayer = MediaPlayer.create(getContext(),
+              R.raw.door3_open);
+    }
+    videoTexture.updateMediaPlayer(mMediaPlayer);
+    mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+      @Override
+      public void onCompletion(MediaPlayer mp) {
+        mMediaPlayer.stop();
+        mMediaPlayer.release();
+        if (doorNum == 1) {
+          mMediaPlayer = MediaPlayer.create(getContext(),
+                  R.raw.door1_close);
+        }
+        if (doorNum == 2) {
+          mMediaPlayer = MediaPlayer.create(getContext(),
+                  R.raw.door2_close);
+        }
+        if (doorNum == 3) {
+          mMediaPlayer = MediaPlayer.create(getContext(),
+                  R.raw.door3_close);
+        }
+        videoTexture.updateMediaPlayer(mMediaPlayer);
+        mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+          @Override
+          public void onCompletion(MediaPlayer mp) {
+            mMediaPlayer.stop();
+            mMediaPlayer.release();
+            mMediaPlayer = MediaPlayer.create(getContext(),
+                    R.raw.doors);
+            videoTexture.updateMediaPlayer(mMediaPlayer);
+            notDoors = false;
+            mMediaPlayer.start();
+          }
+        });
+        mMediaPlayer.start();
+      }
+    });
+    mMediaPlayer.start();
   }
   private float convertBytesToFloat(byte b1, byte b2) {
     short s = (short)(((b1 & 0xFF)<<8) | (b2 & 0xFF));
@@ -205,9 +345,11 @@ isPlaying = false;
   public void onDrawEye(Eye eye) {
     if(eye.getType() == Eye.Type.LEFT){
       videoTexture.setOffset(0f, 0f);
+      videoTexture.setScale(1f,vScale);
     }
     else {
-      videoTexture.setOffset(0f, 0.5f);
+      videoTexture.setOffset(0f, vOffset);
+      videoTexture.setScale(1f,vScale);
     }
     super.onDrawEye(eye);
   }
@@ -237,11 +379,15 @@ isPlaying = false;
   }
 
   @Override
-  public void onTouchEvent(MotionEvent motionEvent) {}
+  public void onTouchEvent(MotionEvent motionEvent) {
+
+  }
+
   /**
    * Create all objects, materials, textures, etc. The engine is guaranteed to be set up at this
    * point, whereas it may not be ready in onCreate or elsewhere.
    */
+  @TargetApi(Build.VERSION_CODES.LOLLIPOP)
   @Override
   public void initScene() {
     mMediaPlayer = MediaPlayer.create(getContext(),
@@ -250,9 +396,10 @@ isPlaying = false;
     mMediaPlayer.setVolume(0,0);
 
     videoTexture = new CustomStreamingTexture("doors", mMediaPlayer);
+    vScale = 0.5f;
+    vOffset = 0.5f;
     videoTexture.enableScaling(true);
     videoTexture.enableOffset(true);
-    videoTexture.setScale(1f,0.5f);
     Material material = createMaterial();
     try {
       material.addTexture(videoTexture);
@@ -287,9 +434,19 @@ isPlaying = false;
     createReticle(new Vector3(0,0,-0.05f), new Vector3(0.15f, 0.15f, 0.15f));
     scene.addChild(reticle);
 
-    createDoorFrame();
-    scene.addChild(doorFrame);
-  }
+    randomNum = ThreadLocalRandom.current().nextInt(0, 2 + 1);
+    Log.v("RandomNum",Integer.toString(randomNum));
+      doorFrame1 = createDoorFrame(-1, 0, -1);
+
+      doorFrame2 = createDoorFrame(-400, 1, 80);
+
+      doorFrame3 = createDoorFrame(-8, 0, 12);
+
+      scene.addChild(doorFrame1);
+      scene.addChild(doorFrame2);
+      scene.addChild(doorFrame3);
+    }
+
 
   private void createReticle (Vector3 position, Vector3 scale) {
     // NOTE: don't use special characters for the "name" field--it will cause an error.
@@ -313,14 +470,15 @@ isPlaying = false;
     reticle.rotate(Vector3.Axis.Z, 180);
   }
 
-  private void createDoorFrame() {
+  @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+  private Plane createDoorFrame(float x, float y, float z) {
     doorFrame = new Plane();
 
     // Load the door frame texture
     Material material = loadGraphic(mContext, "doorFrame", R.raw.door_frame);
 
     doorFrame.setMaterial(material);
-    doorFrame.setPosition(0,0,-1.0f);
+    doorFrame.setPosition(x, y, z);
     doorFrame.enableLookAt();
     doorFrame.setLookAt(0,0,0);
     doorFrame.setTransparent(true);
@@ -328,6 +486,7 @@ isPlaying = false;
     doorFrame.setBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
     doorFrame.setBlendingEnabled(true);
     doorFrame.setVisible(true);
+    return doorFrame;
   }
 
   /**
