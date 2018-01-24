@@ -7,10 +7,13 @@ import android.media.MediaPlayer;
 import android.opengl.GLES20;
 import android.os.Build;
 import android.util.Log;
+import android.view.MenuInflater;
 import android.view.MotionEvent;
 import com.google.vr.sdk.base.Eye;
 import com.google.vr.sdk.base.HeadTransform;
 import com.google.vr.sdk.base.Viewport;
+import com.google.vr.sdk.proto.nano.Analytics;
+
 import org.rajawali3d.Object3D;
 import org.rajawali3d.cameras.Camera;
 import org.rajawali3d.materials.Material;
@@ -45,7 +48,7 @@ public class VRPlayerRenderer extends VRRenderer {
   public AudioTrack at;
   public int minBufferSize;
   byte[] music = null;
-  InputStream nookAudio;
+  InputStream alienAudio;
   public double angle;
   private MediaPlayer mMediaPlayer;
   public CustomStreamingTexture videoTexture;
@@ -64,6 +67,9 @@ public class VRPlayerRenderer extends VRRenderer {
   private Plane doorFrame3;
   private boolean videoChanged = false;
   private int randomNum;
+  private float vOffset;
+  private float vScale;
+  private boolean notDoors = false;
   public VRPlayerRenderer(Context context) {
     super(context);
     // Allow Rajawali debug logs
@@ -84,7 +90,7 @@ public class VRPlayerRenderer extends VRRenderer {
         at = new AudioTrack(AudioManager.STREAM_MUSIC, 48000,
                 AudioFormat.CHANNEL_CONFIGURATION_STEREO, AudioFormat.ENCODING_PCM_16BIT,
                 minBufferSize, AudioTrack.MODE_STREAM);
-        nookAudio = mContext.getResources().openRawResource(R.raw.nook);
+        alienAudio = mContext.getResources().openRawResource(R.raw.kkdirge);
         Log.v(TAG, "startAudio()Inside Run");
         at.play();
         // play the audio track and loop indefinitely, repeatedly writing to AudioTrack
@@ -92,7 +98,7 @@ public class VRPlayerRenderer extends VRRenderer {
         int x = 0;
         try{
           while(x == 0 && isPlaying == true){
-            i = nookAudio.read(music);
+            i = alienAudio.read(music);
             if (i != -1){
               if (i == music.length){
                 angleOfSound = Math.toRadians(90);
@@ -120,8 +126,8 @@ public class VRPlayerRenderer extends VRRenderer {
                 at.write(music, 0, i);
               }
             }else{
-              nookAudio.reset();
-              nookAudio.skip(44);
+              alienAudio.reset();
+              alienAudio.skip(44);
             }
           }
         }catch (IOException e){
@@ -134,6 +140,7 @@ public class VRPlayerRenderer extends VRRenderer {
     // we've created the thread, now we need to start it
     audioThread.start();
   }
+
   public static float[] getScale(double soundAngle, double userAngle) {
     double minScale = Math.sqrt(1.0-maxScale);
     // are we scaling for the left ear or the right
@@ -154,6 +161,56 @@ public class VRPlayerRenderer extends VRRenderer {
     scale[1] = (float)Math.sqrt(1.0 - lScale*lScale);
     return scale;
   }
+  private void checkLook(){
+      if (isLookingAtObject(doorFrame1) && randomNum != 0) {
+        if (videoChanged == false) {
+          notDoors = true;
+          openAndCloseDoor(1);
+        }
+      }
+      if (isLookingAtObject(doorFrame2) && randomNum != 1) {
+        if (videoChanged == false) {
+          notDoors = true;
+          openAndCloseDoor(2);
+        }
+      }
+      if (isLookingAtObject(doorFrame3) && randomNum != 2) {
+        if (videoChanged == false) {
+          notDoors = true;
+          openAndCloseDoor(3);
+        }
+      }
+      if (isLookingAtObject(doorFrame1) && randomNum == 0) {
+        reticle.setMaterial(reticleIsLookingAtMaterial);
+        if (videoChanged == false) {
+          openAndChangeVideo();
+          reticle.destroy();
+          notDoors = true;
+          videoChanged = true;
+        }
+      }
+      if (isLookingAtObject(doorFrame2) && randomNum == 1) {
+        reticle.setMaterial(reticleIsLookingAtMaterial);
+        if (videoChanged == false) {
+          notDoors = true;
+          openAndChangeVideo();
+          reticle.destroy();
+          videoChanged = true;
+        }
+      }
+      if (isLookingAtObject(doorFrame3) && randomNum == 2) {
+        reticle.setMaterial(reticleIsLookingAtMaterial);
+        if (videoChanged == false) {
+          notDoors = true;
+         openAndChangeVideo();
+          reticle.destroy();
+          videoChanged = true;
+        }
+      }
+    else {
+      reticle.setMaterial(reticleDefaultMaterial);
+    }
+  }
   @TargetApi(Build.VERSION_CODES.LOLLIPOP)
   @Override
   public void onNewFrame(HeadTransform headTransform){
@@ -161,213 +218,94 @@ public class VRPlayerRenderer extends VRRenderer {
     float[] fwd = new float[3];
     headTransform.getForwardVector(fwd, 0);
     head = headTransform;
-
-    if (isLookingAtObject(doorFrame1) && randomNum != 0){
-      reticle.setMaterial(reticleIsLookingAtMaterial);
-      if(videoChanged == false){
-        mMediaPlayer.stop();
-        mMediaPlayer.release();
-        mMediaPlayer = MediaPlayer.create(getContext(),
-                R.raw.door1_open);
-        videoTexture.updateMediaPlayer(mMediaPlayer);
-        mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-
-          @Override
-          public void onCompletion(MediaPlayer mp) {
-            mMediaPlayer.stop();
-            mMediaPlayer.release();
-            mMediaPlayer = MediaPlayer.create(getContext(),
-                    R.raw.door1_close);
-            videoTexture.updateMediaPlayer(mMediaPlayer);
-            mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-
-              @Override
-              public void onCompletion(MediaPlayer mp) {
-                mMediaPlayer.stop();
-                mMediaPlayer.release();
-                mMediaPlayer = MediaPlayer.create(getContext(),
-                        R.raw.doors);
-                videoTexture.updateMediaPlayer(mMediaPlayer);
-                mMediaPlayer.start();
-              }
-
-            });
-            mMediaPlayer.start();
-          }
-
-        });
-        mMediaPlayer.start();
-        //reticle.destroy();
-        //videoChanged = true;
-      }
-    }
-    if (isLookingAtObject(doorFrame2) && randomNum != 1){
-      reticle.setMaterial(reticleIsLookingAtMaterial);
-      if(videoChanged == false){
-        mMediaPlayer.stop();
-        mMediaPlayer.release();
-        mMediaPlayer = MediaPlayer.create(getContext(),
-                R.raw.door2_open);
-        videoTexture.updateMediaPlayer(mMediaPlayer);
-        mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-
-          @Override
-          public void onCompletion(MediaPlayer mp) {
-            mMediaPlayer.stop();
-            mMediaPlayer.release();
-            mMediaPlayer = MediaPlayer.create(getContext(),
-                    R.raw.door2_close);
-            videoTexture.updateMediaPlayer(mMediaPlayer);
-            mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-
-              @Override
-              public void onCompletion(MediaPlayer mp) {
-                mMediaPlayer.stop();
-                mMediaPlayer.release();
-                mMediaPlayer = MediaPlayer.create(getContext(),
-                        R.raw.doors);
-                videoTexture.updateMediaPlayer(mMediaPlayer);
-                mMediaPlayer.start();
-              }
-
-            });
-            mMediaPlayer.start();
-          }
-
-        });
-        mMediaPlayer.start();
-
-        //reticle.destroy();
-      }
-    }
-    if (isLookingAtObject(doorFrame3) && randomNum != 2){
-      reticle.setMaterial(reticleIsLookingAtMaterial);
-      if(videoChanged == false){
-        mMediaPlayer.stop();
-        mMediaPlayer.release();
-        mMediaPlayer = MediaPlayer.create(getContext(),
-                R.raw.door3_open);
-        videoTexture.updateMediaPlayer(mMediaPlayer);
-        mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-
-          @Override
-          public void onCompletion(MediaPlayer mp) {
-            mMediaPlayer.stop();
-            mMediaPlayer.release();
-            mMediaPlayer = MediaPlayer.create(getContext(),
-                    R.raw.door3_close);
-            videoTexture.updateMediaPlayer(mMediaPlayer);
-            mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-
-              @Override
-              public void onCompletion(MediaPlayer mp) {
-                mMediaPlayer.stop();
-                mMediaPlayer.release();
-                mMediaPlayer = MediaPlayer.create(getContext(),
-                        R.raw.doors);
-                videoTexture.updateMediaPlayer(mMediaPlayer);
-                mMediaPlayer.start();
-              }
-
-            });
-            mMediaPlayer.start();
-          }
-
-        });
-        mMediaPlayer.start();
-
-        //reticle.destroy();
-      }
-    }
-    if (isLookingAtObject(doorFrame1) && randomNum == 0){
-      reticle.setMaterial(reticleIsLookingAtMaterial);
-      if(videoChanged == false){
-        mMediaPlayer.stop();
-        mMediaPlayer.release();
-        mMediaPlayer = MediaPlayer.create(getContext(),
-                R.raw.door1_open);
-        videoTexture.updateMediaPlayer(mMediaPlayer);
-        mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-
-          @Override
-          public void onCompletion(MediaPlayer mp) {
-            mMediaPlayer.stop();
-            mMediaPlayer.release();
-            mMediaPlayer = MediaPlayer.create(getContext(),
-                    R.raw.spaceperson);
-            mMediaPlayer.setLooping(true);
-            videoTexture.updateMediaPlayer(mMediaPlayer);
-            mMediaPlayer.start();
-          }
-
-        });
-        mMediaPlayer.start();
-        reticle.destroy();
-        videoChanged = true;
-      }
-    }
-    if (isLookingAtObject(doorFrame2) && randomNum == 1) {
-      reticle.setMaterial(reticleIsLookingAtMaterial);
-      if (videoChanged == false) {
-        mMediaPlayer.stop();
-        mMediaPlayer.release();
-        mMediaPlayer = MediaPlayer.create(getContext(),
-                R.raw.door2_open);
-        mMediaPlayer.setLooping(true);
-        videoTexture.updateMediaPlayer(mMediaPlayer);
-        mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-
-          @Override
-          public void onCompletion(MediaPlayer mp) {
-            mMediaPlayer.stop();
-            mMediaPlayer.release();
-            mMediaPlayer = MediaPlayer.create(getContext(),
-                    R.raw.spaceperson);
-            mMediaPlayer.setLooping(true);
-            videoTexture.updateMediaPlayer(mMediaPlayer);
-            mMediaPlayer.start();
-          }
-
-        });
-        mMediaPlayer.start();
-        reticle.destroy();
-        videoChanged = true;
-
-      }
-    }
-    if (isLookingAtObject(doorFrame3) && randomNum == 2) {
-      reticle.setMaterial(reticleIsLookingAtMaterial);
-      if (videoChanged == false) {
-        mMediaPlayer.stop();
-        mMediaPlayer.release();
-        mMediaPlayer = MediaPlayer.create(getContext(),
-                R.raw.door3_open);
-        videoTexture.updateMediaPlayer(mMediaPlayer);
-        mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-
-          @Override
-          public void onCompletion(MediaPlayer mp) {
-            mMediaPlayer.stop();
-            mMediaPlayer.release();
-            mMediaPlayer = MediaPlayer.create(getContext(),
-                    R.raw.spaceperson);
-            mMediaPlayer.setLooping(true);
-            videoTexture.updateMediaPlayer(mMediaPlayer);
-            mMediaPlayer.start();
-          }
-
-        });
-        mMediaPlayer.start();
-        reticle.destroy();
-        videoChanged = true;
-
-      }
-    }
-    else {
-      reticle.setMaterial(reticleDefaultMaterial);
+    if(notDoors == false) {
+      checkLook();
     }
     super.onNewFrame(headTransform);
   }
+  private void openAndChangeVideo() {
+    mMediaPlayer.stop();
+    mMediaPlayer.release();
+    if (randomNum == 0) {
+      mMediaPlayer = MediaPlayer.create(getContext(),
+              R.raw.door1_open);
+    }
+    if (randomNum == 1) {
+      mMediaPlayer = MediaPlayer.create(getContext(),
+              R.raw.door2_open);
+    }
+    if (randomNum == 2) {
+      mMediaPlayer = MediaPlayer.create(getContext(),
+              R.raw.door3_open);
+    }
+    videoTexture.updateMediaPlayer(mMediaPlayer);
+    mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+      public void onCompletion(MediaPlayer mp) {
+        mMediaPlayer.stop();
+        mMediaPlayer.release();
+        mMediaPlayer = MediaPlayer.create(getContext(),
+                R.raw.spaceperson);
+        videoTexture.updateMediaPlayer(mMediaPlayer);
+        notDoors = true;
+        vScale = 1.0f;
+        vOffset = 0f;
+        mMediaPlayer.start();
+      }
+    });
+    mMediaPlayer.start();
+  }
+  private void openAndCloseDoor(final int doorNum){
+      mMediaPlayer.stop();
+      mMediaPlayer.release();
+      if (doorNum == 1) {
+        mMediaPlayer = MediaPlayer.create(getContext(),
+                R.raw.door1_open);
+      }
+      if (doorNum == 2) {
+        mMediaPlayer = MediaPlayer.create(getContext(),
+                R.raw.door2_open);
+      }
+      if (doorNum == 3) {
+        mMediaPlayer = MediaPlayer.create(getContext(),
+                R.raw.door3_open);
+      }
+      videoTexture.updateMediaPlayer(mMediaPlayer);
+      mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+        @Override
+        public void onCompletion(MediaPlayer mp) {
+          mMediaPlayer.stop();
+          mMediaPlayer.release();
+          if (doorNum == 1) {
+            mMediaPlayer = MediaPlayer.create(getContext(),
+                    R.raw.door1_close);
+          }
+          if (doorNum == 2) {
+            mMediaPlayer = MediaPlayer.create(getContext(),
+                    R.raw.door2_close);
+          }
+          if (doorNum == 3) {
+            mMediaPlayer = MediaPlayer.create(getContext(),
+                    R.raw.door3_close);
+          }
+          videoTexture.updateMediaPlayer(mMediaPlayer);
+          mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer mp) {
+              mMediaPlayer.stop();
+              mMediaPlayer.release();
+              mMediaPlayer = MediaPlayer.create(getContext(),
+                      R.raw.doors);
+              videoTexture.updateMediaPlayer(mMediaPlayer);
+              notDoors = false;
+              mMediaPlayer.start();
+            }
+          });
+          mMediaPlayer.start();
+        }
+      });
+      mMediaPlayer.start();
+    }
+
   private float convertBytesToFloat(byte b1, byte b2) {
     short s = (short)(((b1 & 0xFF)<<8) | (b2 & 0xFF));
     return (float)s;
@@ -390,10 +328,15 @@ public class VRPlayerRenderer extends VRRenderer {
   @Override
   public void onDrawEye(Eye eye) {
     if(eye.getType() == Eye.Type.LEFT){
+      //videoTexture.setScale(1f,0.5f);
+      videoTexture.setScale(1f,vScale);
       videoTexture.setOffset(0f, 0f);
     }
     else {
-      videoTexture.setOffset(0f, 0.5f);
+      //videoTexture.setScale(1f,0.5f);
+      //videoTexture.setOffset(0f, 0.5f);
+      videoTexture.setScale(1f,vScale);
+      videoTexture.setOffset(0f, vOffset);
     }
     super.onDrawEye(eye);
   }
@@ -432,9 +375,10 @@ public class VRPlayerRenderer extends VRRenderer {
     mMediaPlayer.setLooping(true);
     mMediaPlayer.setVolume(0,0);
     videoTexture = new CustomStreamingTexture("doors", mMediaPlayer);
+    vScale = 0.5f;
+    vOffset = 0.5f;
     videoTexture.enableScaling(true);
     videoTexture.enableOffset(true);
-    videoTexture.setScale(1f,0.5f);
     Material material = createMaterial();
     try {
       material.addTexture(videoTexture);
