@@ -107,8 +107,11 @@
 //    renderer.onScreenTap();
 //  }
 //}
+<<<<<<< HEAD
 //package com.google.vr.sdk.samples.controllerclient;
 
+=======
+>>>>>>> e080c75938bb4e770ad3e9672e0ba58ddb4db7e6
 package com.witny.vr.player;
 
 import android.app.Activity;
@@ -121,15 +124,25 @@ import com.google.vr.sdk.controller.Controller;
 import com.google.vr.sdk.controller.Controller.ConnectionStates;
 import com.google.vr.sdk.controller.ControllerManager;
 import com.google.vr.sdk.controller.ControllerManager.ApiStatus;
+<<<<<<< HEAD
+=======
+// import com.google.vr.sdk.samples.controllerclient.R;
+>>>>>>> e080c75938bb4e770ad3e9672e0ba58ddb4db7e6
 
 /**
  * Minimal example demonstrating how to receive and process Daydream controller input. It connects
  * to a Daydream Controller and displays a simple graphical and textual representation of the
  * controller's sensors. This example only works with Android N and Daydream-ready phones.
  */
+<<<<<<< HEAD
 public class ControllerClientActivity extends Activity {
 
   private static final String TAG = ControllerClientActivity.class.getSimpleName();
+=======
+public class VRActivity extends Activity {
+
+  private static final String TAG = VRActivity.class.getSimpleName();
+>>>>>>> e080c75938bb4e770ad3e9672e0ba58ddb4db7e6
 
   // These two objects are the primary APIs for interacting with the Daydream controller.
   private ControllerManager controllerManager;
@@ -177,6 +190,7 @@ public class ControllerClientActivity extends Activity {
     // Bind the OrientationView to our acquired controller.
     controllerOrientationView = (OrientationView) findViewById(R.id.controller_orientation_view);
     controllerOrientationView.setController(controller);
+<<<<<<< HEAD
 
     // This configuration won't be required for normal GVR apps. However, since this sample doesn't
     // use GvrView, it needs pretend to be a VR app in order to receive controller events. The
@@ -195,6 +209,26 @@ public class ControllerClientActivity extends Activity {
   }
 
   @Override
+=======
+
+    // This configuration won't be required for normal GVR apps. However, since this sample doesn't
+    // use GvrView, it needs pretend to be a VR app in order to receive controller events. The
+    // Activity.setVrModeEnabled is only enabled on in N, so this is an GVR-internal utility method
+    // to configure the app via reflection.
+    //
+    // If this sample is compiled with the N SDK, Activity.setVrModeEnabled can be called directly.
+    AndroidCompat.setVrModeEnabled(this, true);
+  }
+
+  @Override
+  protected void onStart() {
+    super.onStart();
+    controllerManager.start();
+    controllerOrientationView.startTrackingOrientation();
+  }
+
+  @Override
+>>>>>>> e080c75938bb4e770ad3e9672e0ba58ddb4db7e6
   protected void onStop() {
     controllerManager.stop();
     controllerOrientationView.stopTrackingOrientation();
@@ -247,6 +281,7 @@ public class ControllerClientActivity extends Activity {
       controller.update();
 
       Log.v(TAG, "Controller Orientation: " + controller.orientation);
+<<<<<<< HEAD
 
       float[] angles = new float[3];
       controller.orientation.toYawPitchRollDegrees(angles);
@@ -263,6 +298,24 @@ public class ControllerClientActivity extends Activity {
         controllerTouchpadView.setText("[ NO TOUCH ]");
       }
 
+=======
+
+      float[] angles = new float[3];
+      controller.orientation.toYawPitchRollDegrees(angles);
+      controllerOrientationText.setText(String.format(
+              "%s\n%s\n[%4.0f\u00b0 y %4.0f\u00b0 p %4.0f\u00b0 r]",
+              controller.orientation,
+              controller.orientation.toAxisAngleString(),
+              angles[0], angles[1], angles[2]));
+
+      if (controller.isTouching) {
+        controllerTouchpadView.setText(
+                String.format("[%4.2f, %4.2f]", controller.touch.x, controller.touch.y));
+      } else {
+        controllerTouchpadView.setText("[ NO TOUCH ]");
+      }
+
+>>>>>>> e080c75938bb4e770ad3e9672e0ba58ddb4db7e6
       controllerButtonView.setText(String.format("[%s][%s][%s][%s][%s]",
               controller.appButtonState ? "A" : " ",
               controller.homeButtonState ? "H" : " ",
