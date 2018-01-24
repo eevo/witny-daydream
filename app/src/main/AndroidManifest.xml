@@ -1,81 +1,59 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.witny.vr.player"
-    android:versionCode="171114033"
-    android:versionName="1.120.0">
-    <uses-sdk android:minSdkVersion="24" android:targetSdkVersion="24" />
-    <uses-feature android:glEsVersion="0x00030002" android:required="true" />
+      package="com.witny.vr.player"
+      android:versionCode="171114033"
+      android:versionName="1.120.0">
+
+    <!-- The GVR SDK requires API 19+ and OpenGL ES 2+. -->
+    <uses-sdk android:minSdkVersion="19" android:targetSdkVersion="24" />
+    <uses-feature android:glEsVersion="0x00020000" android:required="true" />
+
+    <!-- Required for vibration feedback when the trigger action is performed. -->
+    <uses-permission android:name="android.permission.VIBRATE"/>
+    <!-- Required to read the paired viewer's distortion parameters. -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+
+    <!-- Make accelerometer and gyroscope hard requirements for good head tracking. -->
+    <uses-feature android:name="android.hardware.sensor.accelerometer" android:required="true"/>
+    <uses-feature android:name="android.hardware.sensor.gyroscope" android:required="true"/>
+
+    <!-- Indicates use of Android's VR-mode, available only on Android N+. -->
+    <uses-feature android:name="android.software.vr.mode" android:required="false"/>
+    <!-- Indicates use of VR features that are available only on Daydream-ready devices. -->
+    <uses-feature android:name="android.hardware.vr.high_performance" android:required="false"/>
 
     <application
-        android:label="VRActivity"
-        android:theme="@android:style/Theme.Holo.Light">
+            android:allowBackup="true"
+            android:supportsRtl="true"
+            android:label="VRActivity"
+            android:theme="@style/VrActivityTheme">
         <activity
-            android:name=".VRActivity"
-            android:screenOrientation="portrait">
+                android:name=".VRActivity"
+                android:label="@string/app_name"
+                android:screenOrientation="landscape"
+                android:configChanges="orientation|keyboardHidden|screenSize|uiMode|navigation"
+                android:enableVrMode="@string/gvr_vr_mode_component"
+                android:resizeableActivity="false">
+            <!-- The VR icon to be used in Daydream Home comes in two parts:
+                 a foreground icon and a background icon.  -->
+            <meta-data android:name="com.google.android.vr.icon"
+                       android:resource="@drawable/vr_icon" />
+            <meta-data android:name="com.google.android.vr.icon_background"
+                       android:resource="@drawable/vr_icon_background" />
+
             <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="com.google.intent.category.CARDBOARD" />
+
+                <!-- The DAYDREAM category should only be declared by Activities that are Daydream
+                     compatible. Daydream compatible apps should typically use the Daydream
+                     controller APIs directly, however in this sample app we instead rely on
+                     Cardboard trigger emulation. -->
+                <category android:name="com.google.intent.category.DAYDREAM" />
             </intent-filter>
         </activity>
     </application>
+
 </manifest>
-
-<!--<?xml version="1.0" encoding="utf-8"?>-->
-<!--<manifest xmlns:android="http://schemas.android.com/apk/res/android"-->
-      <!--package="com.witny.vr.player"-->
-      <!--android:versionCode="171114033"-->
-      <!--android:versionName="1.120.0">-->
-
-    <!--&lt;!&ndash; The GVR SDK requires API 19+ and OpenGL ES 2+. &ndash;&gt;-->
-    <!--<uses-sdk android:minSdkVersion="19" android:targetSdkVersion="24" />-->
-    <!--<uses-feature android:glEsVersion="0x00020000" android:required="true" />-->
-
-    <!--&lt;!&ndash; Required for vibration feedback when the trigger action is performed. &ndash;&gt;-->
-    <!--<uses-permission android:name="android.permission.VIBRATE"/>-->
-    <!--&lt;!&ndash; Required to read the paired viewer's distortion parameters. &ndash;&gt;-->
-    <!--<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>-->
-
-    <!--&lt;!&ndash; Make accelerometer and gyroscope hard requirements for good head tracking. &ndash;&gt;-->
-    <!--<uses-feature android:name="android.hardware.sensor.accelerometer" android:required="true"/>-->
-    <!--<uses-feature android:name="android.hardware.sensor.gyroscope" android:required="true"/>-->
-
-    <!--&lt;!&ndash; Indicates use of Android's VR-mode, available only on Android N+. &ndash;&gt;-->
-    <!--<uses-feature android:name="android.software.vr.mode" android:required="false"/>-->
-    <!--&lt;!&ndash; Indicates use of VR features that are available only on Daydream-ready devices. &ndash;&gt;-->
-    <!--<uses-feature android:name="android.hardware.vr.high_performance" android:required="false"/>-->
-
-    <!--<application-->
-            <!--android:allowBackup="true"-->
-            <!--android:supportsRtl="true"-->
-            <!--android:label="VRActivity"-->
-            <!--android:theme="@style/VrActivityTheme">-->
-        <!--<activity-->
-                <!--android:name=".VRActivity"-->
-                <!--android:label="@string/app_name"-->
-                <!--android:screenOrientation="landscape"-->
-                <!--android:configChanges="orientation|keyboardHidden|screenSize|uiMode|navigation"-->
-                <!--android:enableVrMode="@string/gvr_vr_mode_component"-->
-                <!--android:resizeableActivity="false">-->
-            <!--&lt;!&ndash; The VR icon to be used in Daydream Home comes in two parts:-->
-                 <!--a foreground icon and a background icon.  &ndash;&gt;-->
-            <!--<meta-data android:name="com.google.android.vr.icon"-->
-                       <!--android:resource="@drawable/vr_icon" />-->
-            <!--<meta-data android:name="com.google.android.vr.icon_background"-->
-                       <!--android:resource="@drawable/vr_icon_background" />-->
-
-            <!--<intent-filter>-->
-                <!--<action android:name="android.intent.action.MAIN" />-->
-                <!--<category android:name="android.intent.category.LAUNCHER" />-->
-                <!--<category android:name="com.google.intent.category.CARDBOARD" />-->
-
-                <!--&lt;!&ndash; The DAYDREAM category should only be declared by Activities that are Daydream-->
-                     <!--compatible. Daydream compatible apps should typically use the Daydream-->
-                     <!--controller APIs directly, however in this sample app we instead rely on-->
-                     <!--Cardboard trigger emulation. &ndash;&gt;-->
-                <!--<category android:name="com.google.intent.category.DAYDREAM" />-->
-            <!--</intent-filter>-->
-        <!--</activity>-->
-    <!--</application>-->
-
-<!--</manifest>-->
 
