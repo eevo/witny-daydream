@@ -7,6 +7,8 @@ import com.google.vr.sdk.base.Eye;
 import com.google.vr.sdk.base.HeadTransform;
 import com.google.vr.sdk.base.Viewport;
 import com.google.vr.sdk.base.GvrView;
+import com.google.vr.sdk.controller.Controller;
+import com.google.vr.sdk.controller.ControllerManager;
 
 import org.rajawali3d.Object3D;
 import org.rajawali3d.math.Matrix4;
@@ -51,7 +53,7 @@ public abstract class VRRenderer extends Renderer implements GvrView.StereoRende
     }
 
     @Override
-    public void onDrawEye(Eye eye) {
+    public void onDrawEye(Eye eye){
             getCurrentCamera().updatePerspective(
                     eye.getFov().getLeft(),
                     eye.getFov().getRight(),
@@ -107,5 +109,11 @@ public abstract class VRRenderer extends Renderer implements GvrView.StereoRende
         mHeadTranslation.normalize();
 
         return mHeadTranslation.angle(mForwardVec) < maxAngle;
+    }
+    public Controller setControllerVR(Controller controller){
+        return controller;
+    }
+    public ControllerManager setControllerManager(ControllerManager controllerManager){
+        return controllerManager;
     }
 }

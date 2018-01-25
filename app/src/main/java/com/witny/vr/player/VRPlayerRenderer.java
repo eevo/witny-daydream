@@ -6,12 +6,16 @@ import android.graphics.BitmapFactory;
 import android.media.MediaPlayer;
 import android.opengl.GLES20;
 import android.os.Build;
+import android.os.Handler;
 import android.util.Log;
 import android.view.MenuInflater;
 import android.view.MotionEvent;
 import com.google.vr.sdk.base.Eye;
 import com.google.vr.sdk.base.HeadTransform;
 import com.google.vr.sdk.base.Viewport;
+import com.google.vr.sdk.controller.Controller;
+import com.google.vr.sdk.controller.ControllerManager;
+import com.google.vr.sdk.controller.Orientation;
 import com.google.vr.sdk.proto.nano.Analytics;
 
 import org.rajawali3d.Object3D;
@@ -35,6 +39,7 @@ import android.media.AudioManager;
 import android.media.AudioFormat;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.EventListener;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 /**
@@ -70,6 +75,11 @@ public class VRPlayerRenderer extends VRRenderer {
   private float vOffset;
   private float vScale;
   private boolean notDoors = false;
+  private Orientation orientation;
+  private OrientationView orientationView;
+  private Controller controller;
+  private ControllerManager controllerManager;
+
   public VRPlayerRenderer(Context context) {
     super(context);
     // Allow Rajawali debug logs
@@ -369,7 +379,7 @@ public class VRPlayerRenderer extends VRRenderer {
   @TargetApi(Build.VERSION_CODES.LOLLIPOP)
   @Override
   public void initScene() {
-
+    controllerSet(controller,controllerManager);
     mMediaPlayer = MediaPlayer.create(getContext(),
             R.raw.doors);
     mMediaPlayer.setLooping(true);
@@ -421,7 +431,7 @@ public class VRPlayerRenderer extends VRRenderer {
     reticleIsLookingAtMaterial = loadGraphic(mContext, "reticleLookingAt", R.raw.thumbs_up);
     reticle = new ScreenQuad();
     reticle.setMaterial(reticleDefaultMaterial);
-    reticle.setPosition(position);
+    reticle.setPosition(controller.position[0],controller.position[1],controller.position[2]);
     reticle.setTransparent(true);
     reticle.setScale(scale);
     reticle.setBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
@@ -481,4 +491,10 @@ public class VRPlayerRenderer extends VRRenderer {
       reticle.setVisible(!reticle.isVisible());
     }
   }
+  public void controllerSet(Controller controllerSet, ControllerManager managerSet){
+    controller = setControllerVR(controllerSet);
+    controllerManager = setControllerManager(managerSet);
+
+  }
+
 }
