@@ -34,10 +34,10 @@ import android.os.Handler;
 import android.util.Log;
 import android.widget.TextView;
 import com.google.vr.sdk.base.AndroidCompat;
-import com.google.vr.sdk.controller.Controller;
-import com.google.vr.sdk.controller.Controller.ConnectionStates;
-import com.google.vr.sdk.controller.ControllerManager;
-import com.google.vr.sdk.controller.ControllerManager.ApiStatus;
+//import com.google.vr.sdk.controller.Controller;
+//import com.google.vr.sdk.controller.Controller.ConnectionStates;
+//import com.google.vr.sdk.controller.ControllerManager;
+//import com.google.vr.sdk.controller.ControllerManager.ApiStatus;
 
 import org.rajawali3d.primitives.Plane;
 
@@ -51,10 +51,10 @@ public class VRActivity extends GvrActivity {
 
   private Vibrator vibrator;
   private VRPlayerRenderer renderer;
-  private Controller controller;
-  private ControllerManager controllerManager;
-  private Handler uiHandler = new Handler();
-  private OrientationView controllerOrientationView;
+//  private Controller controller;
+//  private ControllerManager controllerManager;
+//  private Handler uiHandler = new Handler();
+//  private OrientationView controllerOrientationView;
 
 
   @Override
@@ -62,11 +62,11 @@ public class VRActivity extends GvrActivity {
     super.onCreate(savedInstanceState);
 
     renderer = new VRPlayerRenderer(getApplicationContext());
-    EventListener listener = new EventListener();
-    controllerManager = new ControllerManager(this, listener);
-    controller = controllerManager.getController();
-    controller.setEventListener(listener);
-    renderer.controllerSet(controller,controllerManager);
+//    EventListener listener = new EventListener();
+//    controllerManager = new ControllerManager(this, listener);
+//    controller = controllerManager.getController();
+//    controller.setEventListener(listener);
+//    renderer.controllerSet(controller,controllerManager);
     initializeGvrView();
     vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
 
@@ -131,62 +131,63 @@ public class VRActivity extends GvrActivity {
 
     renderer.onScreenTap();
   }
-  private class EventListener extends Controller.EventListener
-          implements ControllerManager.EventListener, Runnable {
-
-    // The status of the overall controller API. This is primarily used for error handling since
-    // it rarely changes.
-    private String apiStatus;
-
-    // The state of a specific Controller connection.
-    private int controllerState = ConnectionStates.DISCONNECTED;
-
-    @Override
-    public void onApiStatusChanged(int state) {
-      apiStatus = ApiStatus.toString(state);
-      uiHandler.post(this);
-    }
-
-    @Override
-    public void onConnectionStateChanged(int state) {
-      controllerState = state;
-      uiHandler.post(this);
-    }
-
-    @Override
-    public void onRecentered() {
-      // In a real GVR application, this would have implicitly called recenterHeadTracker().
-      // Most apps don't care about this, but apps that want to implement custom behavior when a
-      // recentering occurs should use this callback.
-      controllerOrientationView.resetYaw();
-    }
-
-    @Override
-    public void onUpdate() {
-      uiHandler.post(this);
-    }
-
-    // Update the various TextViews in the UI thread.
-    @Override
-    public void run() {
-
-      controller.update();
-
-      Log.v(TAG, "Controller Orientation: " + controller.orientation);
-
-      float[] angles = new float[3];
-      controller.orientation.toYawPitchRollDegrees(angles);
-
-      if (controller.isTouching) {
-
-      } else {
-
-      }
-
-    }
-  }
-
 }
+//  private class EventListener extends Controller.EventListener
+//          implements ControllerManager.EventListener, Runnable {
+//
+//    // The status of the overall controller API. This is primarily used for error handling since
+//    // it rarely changes.
+//    private String apiStatus;
+//
+//    // The state of a specific Controller connection.
+//    private int controllerState = ConnectionStates.DISCONNECTED;
+//
+//    @Override
+//    public void onApiStatusChanged(int state) {
+//      apiStatus = ApiStatus.toString(state);
+//      uiHandler.post(this);
+//    }
+//
+//    @Override
+//    public void onConnectionStateChanged(int state) {
+//      controllerState = state;
+//      uiHandler.post(this);
+//    }
+//
+//    @Override
+//    public void onRecentered() {
+//      // In a real GVR application, this would have implicitly called recenterHeadTracker().
+//      // Most apps don't care about this, but apps that want to implement custom behavior when a
+//      // recentering occurs should use this callback.
+//      controllerOrientationView.resetYaw();
+//    }
+//
+//    @Override
+//    public void onUpdate() {
+//      uiHandler.post(this);
+//    }
+//
+//    // Update the various TextViews in the UI thread.
+//    @Override
+//    public void run() {
+//
+//      controller.update();
+//
+//      Log.v(TAG, "Controller Orientation: " + controller.orientation);
+//
+//      float[] angles = new float[3];
+//      controller.orientation.toYawPitchRollDegrees(angles);
+//
+//      if (controller.isTouching) {
+//
+//      } else {
+//
+//      }
+//
+//    }
+//  }
+//
+//}
 //package com.witny.vr.player;
 //
 //import android.app.Activity;

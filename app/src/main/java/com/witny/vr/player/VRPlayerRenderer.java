@@ -6,40 +6,30 @@ import android.graphics.BitmapFactory;
 import android.media.MediaPlayer;
 import android.opengl.GLES20;
 import android.os.Build;
-import android.os.Handler;
 import android.util.Log;
-import android.view.MenuInflater;
 import android.view.MotionEvent;
 import com.google.vr.sdk.base.Eye;
 import com.google.vr.sdk.base.HeadTransform;
 import com.google.vr.sdk.base.Viewport;
-import com.google.vr.sdk.controller.Controller;
-import com.google.vr.sdk.controller.ControllerManager;
-import com.google.vr.sdk.controller.Orientation;
-import com.google.vr.sdk.proto.nano.Analytics;
 
-import org.rajawali3d.Object3D;
 import org.rajawali3d.cameras.Camera;
 import org.rajawali3d.materials.Material;
 import org.rajawali3d.materials.shaders.FragmentShader;
 import org.rajawali3d.materials.shaders.VertexShader;
 import org.rajawali3d.materials.textures.ATexture;
 import org.rajawali3d.materials.textures.Texture;
-import org.rajawali3d.materials.textures.TextureManager;
 import org.rajawali3d.math.vector.Vector3;
 import org.rajawali3d.primitives.Plane;
 import org.rajawali3d.primitives.ScreenQuad;
 import org.rajawali3d.primitives.Sphere;
 import org.rajawali3d.scene.Scene;
 import org.rajawali3d.util.RajLog;
-import org.rajawali3d.materials.textures.StreamingTexture;
 import java.io.InputStream;
 import android.media.AudioTrack;
 import android.media.AudioManager;
 import android.media.AudioFormat;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.EventListener;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 /**
@@ -75,10 +65,7 @@ public class VRPlayerRenderer extends VRRenderer {
   private float vOffset;
   private float vScale;
   private boolean notDoors = false;
-  private Orientation orientation;
-  private OrientationView orientationView;
-  private Controller controller;
-  private ControllerManager controllerManager;
+  private int doorNumber;
 
   public VRPlayerRenderer(Context context) {
     super(context);
@@ -107,7 +94,7 @@ public class VRPlayerRenderer extends VRRenderer {
         int i;
         int x = 0;
         try{
-          while(x == 0 && isPlaying == true){
+          while(x == 0 && isPlaying == true && notDoors == false){
             i = alienAudio.read(music);
             if (i != -1){
               if (i == music.length){
@@ -191,30 +178,27 @@ public class VRPlayerRenderer extends VRRenderer {
         }
       }
       if (isLookingAtObject(doorFrame1) && randomNum == 0) {
-        reticle.setMaterial(reticleIsLookingAtMaterial);
+       // reticle.setMaterial(reticleIsLookingAtMaterial);
         if (videoChanged == false) {
-          openAndChangeVideo();
-          reticle.destroy();
           notDoors = true;
-          videoChanged = true;
+          openAndChangeVideo(1);
+        //  videoChanged = true;
         }
       }
       if (isLookingAtObject(doorFrame2) && randomNum == 1) {
-        reticle.setMaterial(reticleIsLookingAtMaterial);
+        //reticle.setMaterial(reticleIsLookingAtMaterial);
         if (videoChanged == false) {
           notDoors = true;
-          openAndChangeVideo();
-          reticle.destroy();
-          videoChanged = true;
+          openAndChangeVideo(2);
+          //videoChanged = true;
         }
       }
       if (isLookingAtObject(doorFrame3) && randomNum == 2) {
-        reticle.setMaterial(reticleIsLookingAtMaterial);
+       // reticle.setMaterial(reticleIsLookingAtMaterial);
         if (videoChanged == false) {
           notDoors = true;
-         openAndChangeVideo();
-          reticle.destroy();
-          videoChanged = true;
+         openAndChangeVideo(3);
+        //  videoChanged = true;
         }
       }
     else {
@@ -233,32 +217,68 @@ public class VRPlayerRenderer extends VRRenderer {
     }
     super.onNewFrame(headTransform);
   }
-  private void openAndChangeVideo() {
+  private void openAndChangeVideo(int door) {
+    doorNumber = door;
     mMediaPlayer.stop();
     mMediaPlayer.release();
-    if (randomNum == 0) {
+    if (doorNumber == 1) {
       mMediaPlayer = MediaPlayer.create(getContext(),
               R.raw.door1_open);
     }
-    if (randomNum == 1) {
+    if (doorNumber == 2) {
       mMediaPlayer = MediaPlayer.create(getContext(),
               R.raw.door2_open);
     }
-    if (randomNum == 2) {
+    if (doorNumber == 3) {
       mMediaPlayer = MediaPlayer.create(getContext(),
               R.raw.door3_open);
     }
     videoTexture.updateMediaPlayer(mMediaPlayer);
     mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+      @Override
       public void onCompletion(MediaPlayer mp) {
         mMediaPlayer.stop();
         mMediaPlayer.release();
-        mMediaPlayer = MediaPlayer.create(getContext(),
-                R.raw.spaceperson);
+        mMediaPlayer = MediaPlayer.create(getContext(),R.raw.spaceperson);
         videoTexture.updateMediaPlayer(mMediaPlayer);
-        notDoors = true;
         vScale = 1.0f;
         vOffset = 0f;
+        mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+          @Override
+          public void onCompletion(MediaPlayer mp) {
+            mMediaPlayer.stop();
+            mMediaPlayer.release();
+            if (doorNumber == 1) {
+              mMediaPlayer = MediaPlayer.create(getContext(),
+                      R.raw.door1_close);
+            }
+            if (doorNumber == 2) {
+              mMediaPlayer = MediaPlayer.create(getContext(),
+                      R.raw.door2_close);
+            }
+            if (doorNumber == 3) {
+              mMediaPlayer = MediaPlayer.create(getContext(),
+                      R.raw.door3_close);
+            }
+            videoTexture.updateMediaPlayer(mMediaPlayer);
+            mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+              public void onCompletion(MediaPlayer mp) {
+                mMediaPlayer.stop();
+                mMediaPlayer.release();
+                mMediaPlayer = MediaPlayer.create(getContext(),
+                        R.raw.doors);
+                videoTexture.updateMediaPlayer(mMediaPlayer);
+                notDoors = false;
+                vScale = 0.5f;
+                vOffset = 0.5f;
+                mMediaPlayer.start();
+              }
+            });
+            vScale = 0.5f;
+            vOffset = 0.5f;
+            mMediaPlayer.start();
+          }
+        });
         mMediaPlayer.start();
       }
     });
@@ -285,7 +305,33 @@ public class VRPlayerRenderer extends VRRenderer {
         public void onCompletion(MediaPlayer mp) {
           mMediaPlayer.stop();
           mMediaPlayer.release();
-          if (doorNum == 1) {
+          if(doorNum == 1 && randomNum == 2) {
+            mMediaPlayer = MediaPlayer.create(getContext(), R.raw.shark);
+          }
+          if(doorNum == 3 && randomNum == 1) {
+            mMediaPlayer = MediaPlayer.create(getContext(), R.raw.shark);
+          }
+          if(doorNum == 2 && randomNum == 0) {
+            mMediaPlayer = MediaPlayer.create(getContext(), R.raw.shark);
+          }
+          if(doorNum == 2 && randomNum == 2) {
+            mMediaPlayer = MediaPlayer.create(getContext(), R.raw.bloodymary);
+          }
+          if(doorNum == 1 && randomNum == 1) {
+            mMediaPlayer = MediaPlayer.create(getContext(), R.raw.bloodymary);
+          }
+          if(doorNum == 2 && randomNum == 0) {
+            mMediaPlayer = MediaPlayer.create(getContext(), R.raw.bloodymary);
+          }
+          videoTexture.updateMediaPlayer(mMediaPlayer);
+          vScale = 1.0f;
+          vOffset = 0f;
+          mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer mp) {
+              mMediaPlayer.stop();
+              mMediaPlayer.release();
+                        if (doorNum == 1) {
             mMediaPlayer = MediaPlayer.create(getContext(),
                     R.raw.door1_close);
           }
@@ -297,16 +343,22 @@ public class VRPlayerRenderer extends VRRenderer {
             mMediaPlayer = MediaPlayer.create(getContext(),
                     R.raw.door3_close);
           }
-          videoTexture.updateMediaPlayer(mMediaPlayer);
-          mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-            @Override
-            public void onCompletion(MediaPlayer mp) {
-              mMediaPlayer.stop();
-              mMediaPlayer.release();
-              mMediaPlayer = MediaPlayer.create(getContext(),
-                      R.raw.doors);
               videoTexture.updateMediaPlayer(mMediaPlayer);
-              notDoors = false;
+              mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                public void onCompletion(MediaPlayer mp) {
+                  mMediaPlayer.stop();
+                  mMediaPlayer.release();
+                  mMediaPlayer = MediaPlayer.create(getContext(),
+                          R.raw.doors);
+                  videoTexture.updateMediaPlayer(mMediaPlayer);
+                  notDoors = false;
+                  vScale = 0.5f;
+                  vOffset = 0.5f;
+                  mMediaPlayer.start();
+                }
+              });
+              vScale = 0.5f;
+              vOffset = 0.5f;
               mMediaPlayer.start();
             }
           });
@@ -379,7 +431,7 @@ public class VRPlayerRenderer extends VRRenderer {
   @TargetApi(Build.VERSION_CODES.LOLLIPOP)
   @Override
   public void initScene() {
-    controllerSet(controller,controllerManager);
+
     mMediaPlayer = MediaPlayer.create(getContext(),
             R.raw.doors);
     mMediaPlayer.setLooping(true);
@@ -431,7 +483,7 @@ public class VRPlayerRenderer extends VRRenderer {
     reticleIsLookingAtMaterial = loadGraphic(mContext, "reticleLookingAt", R.raw.thumbs_up);
     reticle = new ScreenQuad();
     reticle.setMaterial(reticleDefaultMaterial);
-    reticle.setPosition(controller.position[0],controller.position[1],controller.position[2]);
+    reticle.setPosition(position);
     reticle.setTransparent(true);
     reticle.setScale(scale);
     reticle.setBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
@@ -490,11 +542,6 @@ public class VRPlayerRenderer extends VRRenderer {
     if (reticle != null) {
       reticle.setVisible(!reticle.isVisible());
     }
-  }
-  public void controllerSet(Controller controllerSet, ControllerManager managerSet){
-    controller = setControllerVR(controllerSet);
-    controllerManager = setControllerManager(managerSet);
-
   }
 
 }
