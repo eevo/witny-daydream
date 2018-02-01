@@ -1,2 +1,2 @@
 # witny-daydream
-A daydream app!
+As a part of the winter [Women in Technology and Entrepreneuship in NY](http://www1.cuny.edu/sites/women-in-technology/) internship, [Alanis](https://github.com/alanislugo), [Eram](https://github.com/EramM805), and [Michelle](https://github.com/michellechiq99) built a daydream application to learn more about some parts of VR development.
